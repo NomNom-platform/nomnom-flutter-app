@@ -1,14 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_constants.dart';
 import '../../shared/widgets/bottom_nav_bar.dart';
 import 'package:go_router/go_router.dart';
+import '../auth/presentation/controllers/auth_controller.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() => ref.read(authControllerProvider.notifier).fetchProfile());
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final authState = ref.watch(authControllerProvider);
+    final profile = authState.profile;
+    final healthAsync = ref.watch(healthMetricsProvider);
     return Scaffold(
       appBar: AppBar(
         leading: BackButton(onPressed: () => context.pop()),
@@ -69,8 +85,14 @@ class ProfileScreen extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Alex Johnson', style: theme.textTheme.headlineMedium?.copyWith(fontSize: 24)),
-                            Text('alex.j@example.com', style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+                            Text(
+                              profile?.fullName ?? (authState.isLoading ? 'Loading...' : 'Guest'),
+                              style: theme.textTheme.headlineMedium?.copyWith(fontSize: 24),
+                            ),
+                            Text(
+                              profile?.email ?? '',
+                              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                            ),
                             const SizedBox(height: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -136,8 +158,11 @@ class ProfileScreen extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Objective', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-                              Text('Lose Weight', style: theme.textTheme.headlineMedium?.copyWith(fontSize: 18, color: theme.colorScheme.primary)),
+                              Text('Activity Level', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+                              Text(
+                                profile?.activityLevel?.replaceAll('_', ' ') ?? '—',
+                                style: theme.textTheme.headlineMedium?.copyWith(fontSize: 18, color: theme.colorScheme.primary),
+                              ),
                             ],
                           ),
                         ),
@@ -155,15 +180,19 @@ class ProfileScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text('Current BMI', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.baseline,
-                                textBaseline: TextBaseline.alphabetic,
-                                children: [
-                                  Text('22.4', style: theme.textTheme.headlineMedium?.copyWith(fontSize: 18)),
-                                  const SizedBox(width: 4),
-                                  Text('Healthy', style: theme.textTheme.labelMedium?.copyWith(fontSize: 12, color: theme.colorScheme.secondary)),
-                                ],
-                              )
+                              healthAsync.when(
+                                data: (health) => Row(
+                                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                                  textBaseline: TextBaseline.alphabetic,
+                                  children: [
+                                    Text(health.bmi.toStringAsFixed(1), style: theme.textTheme.headlineMedium?.copyWith(fontSize: 18)),
+                                    const SizedBox(width: 4),
+                                    Text(health.bmiCategory, style: theme.textTheme.labelMedium?.copyWith(fontSize: 12, color: theme.colorScheme.secondary)),
+                                  ],
+                                ),
+                                loading: () => Text('—', style: theme.textTheme.headlineMedium?.copyWith(fontSize: 18)),
+                                error: (_, __) => Text('N/A', style: theme.textTheme.headlineMedium?.copyWith(fontSize: 18)),
+                              ),
                             ],
                           ),
                         ),
@@ -171,20 +200,17 @@ class ProfileScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: 0.65,
-                      backgroundColor: theme.colorScheme.surfaceVariant,
-                      valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.tertiaryContainer),
-                      minHeight: 8,
+                  healthAsync.when(
+                    data: (health) => Align(
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        'TDEE ${health.tdee.toStringAsFixed(0)} kcal • Goal ${health.calorieGoal.toStringAsFixed(0)} kcal/day',
+                        style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                      ),
                     ),
+                    loading: () => const SizedBox.shrink(),
+                    error: (_, __) => const SizedBox.shrink(),
                   ),
-                  const SizedBox(height: 8),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Text('65% to goal', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-                  )
                 ],
               ),
             ),
@@ -216,14 +242,28 @@ class ProfileScreen extends StatelessWidget {
               subtitle: 'Home, Work, Other',
             ),
             const SizedBox(height: 16),
-            _SettingsItem(
-              icon: Icons.receipt_long,
-              iconColor: theme.colorScheme.onSurfaceVariant,
-              iconBgColor: theme.colorScheme.surfaceVariant.withOpacity(0.5),
-              title: 'Order History',
-              subtitle: 'Past meals and receipts',
+            GestureDetector(
+              onTap: () => context.push('/order-history'),
+              child: _SettingsItem(
+                icon: Icons.receipt_long,
+                iconColor: theme.colorScheme.onSurfaceVariant,
+                iconBgColor: theme.colorScheme.surfaceVariant.withOpacity(0.5),
+                title: 'Order History',
+                subtitle: 'Past meals and receipts',
+              ),
             ),
-            
+            const SizedBox(height: 16),
+            GestureDetector(
+              onTap: () => context.push('/owner/dashboard'),
+              child: _SettingsItem(
+                icon: Icons.storefront,
+                iconColor: theme.colorScheme.primary,
+                iconBgColor: theme.colorScheme.primaryFixed.withOpacity(0.3),
+                title: 'Owner Mode',
+                subtitle: 'Manage your restaurant',
+              ),
+            ),
+
             const SizedBox(height: 24),
             const Divider(),
             const SizedBox(height: 16),
@@ -231,8 +271,9 @@ class ProfileScreen extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () {
-                  context.go('/login');
+                onPressed: () async {
+                  await ref.read(authControllerProvider.notifier).logout();
+                  if (context.mounted) context.go('/login');
                 },
                 icon: Icon(Icons.logout, color: theme.colorScheme.onErrorContainer),
                 label: Text('Log Out', style: TextStyle(color: theme.colorScheme.onErrorContainer)),
