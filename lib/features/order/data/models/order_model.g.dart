@@ -40,10 +40,13 @@ Map<String, dynamic> _$$OrderModelImplToJson(_$OrderModelImpl instance) =>
 
 const _$OrderStatusEnumMap = {
   OrderStatus.pending: 'PENDING',
+  OrderStatus.confirmed: 'CONFIRMED',
   OrderStatus.accepted: 'ACCEPTED',
   OrderStatus.preparing: 'PREPARING',
   OrderStatus.readyForPickup: 'READY_FOR_PICKUP',
+  OrderStatus.ready: 'READY',
   OrderStatus.outForDelivery: 'OUT_FOR_DELIVERY',
+  OrderStatus.delivering: 'DELIVERING',
   OrderStatus.delivered: 'DELIVERED',
   OrderStatus.cancelled: 'CANCELLED',
 };

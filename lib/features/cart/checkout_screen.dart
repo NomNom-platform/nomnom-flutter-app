@@ -107,7 +107,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         }
         
         // Go to order tracking
-        context.go('/track-order');
+        context.go('/track-order/${response.order.id}');
       }
     } else {
       if (mounted) {

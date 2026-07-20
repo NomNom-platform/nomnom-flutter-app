@@ -44,6 +44,21 @@ class OrderRepositoryImpl implements OrderRepository {
   }
 
   @override
+  Future<Result<PageResponse<OrderModel>>> getRestaurantOrders(
+      String restaurantId, {int page = 0, int size = 10}) async {
+    try {
+      final pageResponse = await remoteDataSource.getRestaurantOrders(restaurantId, page, size);
+      return Success(pageResponse);
+    } on DioException catch (e) {
+      return Fail(ServerFailure(e.response?.data?['message'] ??
+          e.message ??
+          'Failed to fetch restaurant orders'));
+    } catch (e) {
+      return Fail(UnknownFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Result<OrderModel>> getOrderById(String id) async {
     try {
       final order = await remoteDataSource.getOrderById(id);

@@ -69,7 +69,11 @@ class _OwnerRestaurantScreenState extends ConsumerState<OwnerRestaurantScreen> {
       await ref.read(restaurantControllerProvider.notifier).save(input);
       if (!mounted) return;
       _snack(existing == null ? 'Restaurant created' : 'Restaurant profile saved');
-      context.pop();
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go('/owner/dashboard');
+      }
     } catch (e) {
       if (mounted) _snack(e.toString(), isError: true);
     } finally {
@@ -90,7 +94,15 @@ class _OwnerRestaurantScreenState extends ConsumerState<OwnerRestaurantScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        leading: BackButton(onPressed: () => context.pop()),
+        leading: BackButton(
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/owner/dashboard');
+            }
+          },
+        ),
         title: Text('Restaurant Profile', style: theme.textTheme.headlineMedium?.copyWith(fontSize: 20)),
         backgroundColor: theme.colorScheme.surface,
         centerTitle: false,
