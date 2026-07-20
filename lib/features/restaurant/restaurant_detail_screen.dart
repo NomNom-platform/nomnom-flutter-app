@@ -67,7 +67,7 @@ class RestaurantDetailScreen extends ConsumerWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.tertiaryContainer.withOpacity(0.2),
+                          color: theme.colorScheme.tertiaryContainer.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Text('Open', style: theme.textTheme.labelMedium?.copyWith(color: theme.colorScheme.onTertiaryContainer, fontSize: 12)),
@@ -99,7 +99,7 @@ class RestaurantDetailScreen extends ConsumerWidget {
                   // Tabs
                   Container(
                     decoration: BoxDecoration(
-                      border: Border(bottom: BorderSide(color: theme.colorScheme.surfaceVariant)),
+                      border: Border(bottom: BorderSide(color: theme.colorScheme.surfaceContainerHighest)),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -241,7 +241,7 @@ class RestaurantDetailScreen extends ConsumerWidget {
       decoration: BoxDecoration(
         color: isSelected ? theme.colorScheme.primaryContainer : theme.colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: isSelected ? Colors.transparent : theme.colorScheme.outlineVariant.withOpacity(0.3)),
+        border: Border.all(color: isSelected ? Colors.transparent : theme.colorScheme.outlineVariant.withValues(alpha: 0.3)),
       ),
       child: Text(
         label,
@@ -280,9 +280,9 @@ class _MenuItemCard extends StatelessWidget {
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, 4))
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, 4))
         ],
-        border: Border.all(color: theme.colorScheme.surfaceVariant.withOpacity(0.5))
+        border: Border.all(color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5))
       ),
       child: Column(
         children: [

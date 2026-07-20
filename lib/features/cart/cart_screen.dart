@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_constants.dart';
 import '../../shared/widgets/bottom_nav_bar.dart';
 import 'package:go_router/go_router.dart';
-import 'domain/entities/cart_item.dart';
 import 'presentation/controllers/cart_controller.dart';
 
 class CartScreen extends ConsumerWidget {
