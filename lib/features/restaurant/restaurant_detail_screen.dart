@@ -1,13 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_constants.dart';
 import 'package:go_router/go_router.dart';
+import '../cart/domain/entities/cart_item.dart';
+import '../cart/presentation/controllers/cart_controller.dart';
 
-class RestaurantDetailScreen extends StatelessWidget {
+class RestaurantDetailScreen extends ConsumerWidget {
   const RestaurantDetailScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final cart = ref.watch(cartControllerProvider);
+    final cartNotifier = ref.read(cartControllerProvider.notifier);
+
+    // Lấy restaurantId từ route parameter, mặc định dùng ID giả lập nếu không có
+    final restaurantId = GoRouterState.of(context).pathParameters['id'] ?? '85cf7e85-ef80-4965-b778-4367cdfa741d';
+
     return Scaffold(
       body: CustomScrollView(
         slivers: [
@@ -140,19 +149,51 @@ class RestaurantDetailScreen extends StatelessWidget {
                   _MenuItemCard(
                     title: 'Avocado Toast',
                     description: 'Sourdough bread, smashed avocado, cherry tomatoes, radish...',
-                    calories: '450 kcal',
+                    calories: 450,
                     protein: '15g Protein',
-                    price: '\$12.00',
+                    price: 12.00,
                     imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDeIt0ybqWu2ouU9NRNoPIAwltpyuPPEk2pvxlp6NytfzagmHYeovcIRVgKU-SOmRbDEgEWt7cMN65mV_-Jei9USTxY9E0SH48PWVDy7IPRCuznjSzMeOsosZkYYwwIBwlfaxW14fCOmCw14lDN9Qyj9ffr3l0M65Po8foFspkp-gGhCrPJeWYmkSsNUbKbQVnVZMB9EY9YVmhM8L93XzOnRalr3pRt96Ir1EFkxJCK3tMQrWgofRvqd2XNrWVxcIaXUnoI7a2uFhbQ',
+                    onAdd: () {
+                      cartNotifier.addItem(
+                        CartItem(
+                          menuItemId: 'toast-1',
+                          name: 'Avocado Toast',
+                          price: 12.00,
+                          quantity: 1,
+                          calories: 450,
+                          imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDeIt0ybqWu2ouU9NRNoPIAwltpyuPPEk2pvxlp6NytfzagmHYeovcIRVgKU-SOmRbDEgEWt7cMN65mV_-Jei9USTxY9E0SH48PWVDy7IPRCuznjSzMeOsosZkYYwwIBwlfaxW14fCOmCw14lDN9Qyj9ffr3l0M65Po8foFspkp-gGhCrPJeWYmkSsNUbKbQVnVZMB9EY9YVmhM8L93XzOnRalr3pRt96Ir1EFkxJCK3tMQrWgofRvqd2XNrWVxcIaXUnoI7a2uFhbQ',
+                          restaurantId: restaurantId,
+                        ),
+                      );
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Added Avocado Toast to cart'), duration: Duration(seconds: 1)),
+                      );
+                    },
                   ),
                   const SizedBox(height: 16),
                   _MenuItemCard(
                     title: 'Acai Power Bowl',
                     description: 'Organic acai blend topped with house granola, fresh berries...',
-                    calories: '320 kcal',
+                    calories: 320,
                     protein: '8g Protein',
-                    price: '\$14.50',
+                    price: 14.50,
                     imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCxCHhfUbootqen9aQ7SV3K5HX1cRkM6uoVMSMEiFP7RO3o-jVSaH-Y5EMlfLfOroz3iDjXmAWhEpcuDcjS1KtujvpDSPPAJm5166cuFP7a-zhs0PePfWds4qghKkky0H6OXCARzgCDNncNkvI7XWSHHwRuWTu3kSuF6-8eRFgoOb8RMPI4d24-2_5XWsDXVyDH6sQ3Pnbym1CTtFiO4lgWUvbsFrE-UYtkn2uc3sQOCm6U71sZNbtqxJj6AY0V3i3VMJwoNTwbaWjd',
+                    onAdd: () {
+                      cartNotifier.addItem(
+                        CartItem(
+                          menuItemId: 'bowl-1',
+                          name: 'Acai Power Bowl',
+                          price: 14.50,
+                          quantity: 1,
+                          calories: 320,
+                          imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCxCHhfUbootqen9aQ7SV3K5HX1cRkM6uoVMSMEiFP7RO3o-jVSaH-Y5EMlfLfOroz3iDjXmAWhEpcuDcjS1KtujvpDSPPAJm5166cuFP7a-zhs0PePfWds4qghKkky0H6OXCARzgCDNncNkvI7XWSHHwRuWTu3kSuF6-8eRFgoOb8RMPI4d24-2_5XWsDXVyDH6sQ3Pnbym1CTtFiO4lgWUvbsFrE-UYtkn2uc3sQOCm6U71sZNbtqxJj6AY0V3i3VMJwoNTwbaWjd',
+                          restaurantId: restaurantId,
+                        ),
+                      );
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Added Acai Power Bowl to cart'), duration: Duration(seconds: 1)),
+                      );
+                    },
                   ),
                   
                   const SizedBox(height: 100), // Space for bottom cart
@@ -163,32 +204,34 @@ class RestaurantDetailScreen extends StatelessWidget {
         ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: () => context.go('/cart'),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(8)),
-                      child: const Text('2'),
-                    ),
-                    const SizedBox(width: 8),
-                    const Text('View Cart'),
-                  ],
+      floatingActionButton: cart.isEmpty
+          ? null
+          : Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => context.go('/cart'),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(8)),
+                            child: Text('${cart.fold(0, (sum, item) => sum + item.quantity)}'),
+                          ),
+                          const SizedBox(width: 8),
+                          const Text('View Cart'),
+                        ],
+                      ),
+                      Text('\$${cartNotifier.subtotal.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    ],
+                  ),
                 ),
-                const Text('\$24.00', style: TextStyle(fontWeight: FontWeight.bold)),
-              ],
+              ),
             ),
-          ),
-        ),
-      ),
     );
   }
 
@@ -213,10 +256,11 @@ class RestaurantDetailScreen extends StatelessWidget {
 class _MenuItemCard extends StatelessWidget {
   final String title;
   final String description;
-  final String calories;
+  final int calories;
   final String protein;
-  final String price;
+  final double price;
   final String imageUrl;
+  final VoidCallback onAdd;
 
   const _MenuItemCard({
     required this.title,
@@ -225,6 +269,7 @@ class _MenuItemCard extends StatelessWidget {
     required this.protein,
     required this.price,
     required this.imageUrl,
+    required this.onAdd,
   });
 
   @override
@@ -266,7 +311,7 @@ class _MenuItemCard extends StatelessWidget {
                     children: [
                       const Icon(Icons.local_fire_department, size: 14),
                       const SizedBox(width: 4),
-                      Text('$calories | $protein', style: theme.textTheme.bodySmall),
+                      Text('$calories kcal | $protein', style: theme.textTheme.bodySmall),
                     ],
                   ),
                 ),
@@ -274,15 +319,18 @@ class _MenuItemCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(price, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primaryContainer,
-                        shape: BoxShape.circle,
+                    Text('\$${price.toStringAsFixed(2)}', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                    GestureDetector(
+                      onTap: onAdd,
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primaryContainer,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Icons.add, size: 18, color: theme.colorScheme.onPrimaryContainer),
                       ),
-                      child: Icon(Icons.add, size: 18, color: theme.colorScheme.onPrimaryContainer),
                     )
                   ],
                 )

@@ -1,20 +1,108 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_constants.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/constants/app_constants.dart';
+import '../order/data/models/order_item_model.dart';
+import '../order/data/models/order_request_model.dart';
+import '../order/presentation/controllers/order_controller.dart';
+import 'presentation/controllers/cart_controller.dart';
 
-class CheckoutScreen extends StatefulWidget {
+class CheckoutScreen extends ConsumerStatefulWidget {
   const CheckoutScreen({super.key});
 
   @override
-  State<CheckoutScreen> createState() => _CheckoutScreenState();
+  ConsumerState<CheckoutScreen> createState() => _CheckoutScreenState();
 }
 
-class _CheckoutScreenState extends State<CheckoutScreen> {
+class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   int _selectedPayment = 2; // 0: VNPay, 1: Stripe, 2: Cash
+  final TextEditingController _noteController = TextEditingController();
+  final String _deliveryAddress = '123 Culinary Boulevard, Apt 4B, Foodville, CA 90210';
+  bool _isPlacingOrder = false;
+
+  @override
+  void dispose() {
+    _noteController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handlePlaceOrder() async {
+    final cart = ref.read(cartControllerProvider);
+    final cartNotifier = ref.read(cartControllerProvider.notifier);
+
+    if (cart.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Your cart is empty.')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isPlacingOrder = true;
+    });
+
+    final orderItems = cart.map((item) {
+      return OrderItemModel(
+        menuItemId: item.menuItemId,
+        name: item.name,
+        quantity: item.quantity,
+        unitPrice: item.price,
+        calories: item.calories,
+      );
+    }).toList();
+
+    final request = OrderRequestModel(
+      restaurantId: cartNotifier.restaurantId ?? '',
+      deliveryAddress: _deliveryAddress,
+      note: _noteController.text,
+      items: orderItems,
+    );
+
+    final success = await ref.read(orderControllerProvider.notifier).placeOrder(request);
+
+    setState(() {
+      _isPlacingOrder = false;
+    });
+
+    if (success) {
+      // Clear the cart
+      cartNotifier.clearCart();
+
+      // Show success popup/snack
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Order placed successfully!')),
+        );
+        // Go to order tracking
+        context.go('/track-order');
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to place order. Please try again.')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final cart = ref.watch(cartControllerProvider);
+    final cartNotifier = ref.read(cartControllerProvider.notifier);
+
+    if (cart.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(
+          leading: BackButton(onPressed: () => context.pop()),
+          title: const Text('Checkout'),
+        ),
+        body: const Center(
+          child: Text('No items to check out.'),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         leading: BackButton(onPressed: () => context.pop()),
@@ -73,7 +161,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '123 Culinary Boulevard, Apt 4B\nFoodville, CA 90210',
+                          _deliveryAddress,
                           style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                         )
                       ],
@@ -110,7 +198,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   _PaymentOption(
                     title: 'Credit/Debit Card (Stripe)',
                     icon: Icons.credit_card,
-                    iconColor: theme.colorScheme.tertiaryContainer,
+                    iconColor: theme.colorScheme.tertiary,
                     bgColor: theme.colorScheme.tertiaryContainer.withOpacity(0.2),
                     isSelected: _selectedPayment == 1,
                     onTap: () => setState(() => _selectedPayment = 1),
@@ -132,14 +220,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             Text('Delivery Note', style: theme.textTheme.labelMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
             const SizedBox(height: 8),
             TextFormField(
+              controller: _noteController,
               maxLines: 2,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 hintText: 'e.g. Leave at door, ring bell...',
-                prefixIcon: const Padding(
+                prefixIcon: Padding(
                   padding: EdgeInsets.only(bottom: 16.0),
-                  child: Icon(Icons.edit_note), // Alignment can be tricky, simpler approach is just an icon
+                  child: Icon(Icons.edit_note),
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               ),
             ),
             
@@ -159,28 +248,41 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 children: [
                   Text('Order Summary', style: theme.textTheme.labelMedium),
                   const SizedBox(height: 12),
-                  _SummaryItemRow(quantity: '1x', title: 'Classic Cheeseburger', price: '\$14.50'),
-                  const SizedBox(height: 8),
-                  _SummaryItemRow(quantity: '2x', title: 'Truffle Fries', price: '\$9.00'),
+                  ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: cart.length,
+                    separatorBuilder: (context, index) => const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      final item = cart[index];
+                      return _SummaryItemRow(
+                        quantity: '${item.quantity}x',
+                        title: item.name,
+                        price: '\$${(item.price * item.quantity).toStringAsFixed(2)}',
+                      );
+                    },
+                  ),
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 12.0),
                     child: Divider(),
                   ),
-                  _SummaryRow(label: 'Subtotal', value: '\$23.50', theme: theme),
+                  _SummaryRow(label: 'Subtotal', value: '\$${cartNotifier.subtotal.toStringAsFixed(2)}', theme: theme),
                   const SizedBox(height: 8),
-                  _SummaryRow(label: 'Delivery Fee', value: '\$5.00', theme: theme),
+                  _SummaryRow(label: 'Delivery Fee', value: '\$${cartNotifier.deliveryFee.toStringAsFixed(2)}', theme: theme),
+                  const SizedBox(height: 8),
+                  _SummaryRow(label: 'Taxes & Fees (8%)', value: '\$${cartNotifier.tax.toStringAsFixed(2)}', theme: theme),
                   const SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('Total', style: theme.textTheme.labelMedium),
-                      Text('\$28.50', style: theme.textTheme.headlineMedium?.copyWith(fontSize: 18, color: theme.colorScheme.primary)),
+                      Text('\$${cartNotifier.total.toStringAsFixed(2)}', style: theme.textTheme.headlineMedium?.copyWith(fontSize: 18, color: theme.colorScheme.primary)),
                     ],
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 100), // Space for sticky bottom CTA
+            const SizedBox(height: 120), // Space for sticky bottom CTA
           ],
         ),
       ),
@@ -195,30 +297,29 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ),
         child: SafeArea(
           child: ElevatedButton(
-            onPressed: () {
-              context.go('/track-order');
-            },
+            onPressed: _isPlacingOrder ? null : _handlePlaceOrder,
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.all(20),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Place Order', style: TextStyle(fontSize: 18)),
-                Row(
-                  children: [
-                    const Text('\$28.50', style: TextStyle(fontSize: 18, color: Colors.white70)),
-                    const SizedBox(width: 12),
-                    Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.arrow_forward, size: 16),
-                    )
-                  ],
-                )
+                Text(_isPlacingOrder ? 'Placing Order...' : 'Place Order', style: const TextStyle(fontSize: 18)),
+                if (!_isPlacingOrder)
+                  Row(
+                    children: [
+                      Text('\$${cartNotifier.total.toStringAsFixed(2)}', style: const TextStyle(fontSize: 18, color: Colors.white70)),
+                      const SizedBox(width: 12),
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.arrow_forward, size: 16),
+                      )
+                    ],
+                  )
               ],
             ),
           ),

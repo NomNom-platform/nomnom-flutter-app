@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_constants.dart';
 import '../../shared/widgets/bottom_nav_bar.dart';
 import 'package:go_router/go_router.dart';
+import 'domain/entities/cart_item.dart';
+import 'presentation/controllers/cart_controller.dart';
 
-class CartScreen extends StatelessWidget {
+class CartScreen extends ConsumerWidget {
   const CartScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final cart = ref.watch(cartControllerProvider);
+    final cartNotifier = ref.read(cartControllerProvider.notifier);
+
     return Scaffold(
       appBar: AppBar(
         title: Row(
@@ -24,96 +30,115 @@ class CartScreen extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(right: 16.0),
             child: CircleAvatar(
+              backgroundImage: const NetworkImage(AppConstants.mockUserAvatars),
               backgroundColor: theme.colorScheme.surfaceVariant,
-              child: Icon(Icons.person, color: theme.colorScheme.onSurfaceVariant),
+              radius: 16,
             ),
           )
         ],
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
+      body: cart.isEmpty
+          ? Center(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text('My Cart', style: theme.textTheme.displayLarge?.copyWith(fontSize: 32)),
-                  const SizedBox(height: 24),
-                  
-                  // Cart Item 1
-                  _CartItem(
-                    title: 'Truffle Mushroom Burger',
-                    subtitle: 'Medium Rare, No Onions',
-                    price: '\$16.50',
-                    quantity: 1,
-                    imageUrl: AppConstants.mockBurger,
-                  ),
+                  Icon(Icons.shopping_cart_outlined, size: 64, color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5)),
                   const SizedBox(height: 16),
-                  
-                  // Cart Item 2
-                  _CartItem(
-                    title: 'Sweet Potato Fries',
-                    subtitle: 'Side of Garlic Aioli',
-                    price: '\$5.00',
-                    quantity: 2,
-                    imageUrl: AppConstants.mockFood2, // Replace with fries if available, using this as placeholder
-                  ),
+                  Text('Your cart is empty', style: theme.textTheme.headlineMedium),
+                  const SizedBox(height: 8),
+                  Text('Add items from a restaurant to start ordering!', style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: () => context.go('/home'),
+                    child: const Text('Explore Restaurants'),
+                  )
                 ],
               ),
-            ),
-          ),
-          
-          // Order Summary Sticky
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 30, offset: const Offset(0, -8))
-              ],
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24))
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+            )
+          : Column(
               children: [
-                Text('Order Summary', style: theme.textTheme.headlineMedium?.copyWith(fontSize: 20)),
-                const SizedBox(height: 16),
-                _SummaryRow(label: 'Subtotal', value: '\$26.50'),
-                const SizedBox(height: 8),
-                _SummaryRow(label: 'Delivery Fee', value: '\$3.99'),
-                const SizedBox(height: 8),
-                _SummaryRow(label: 'Taxes & Fees', value: '\$2.40'),
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16.0),
-                  child: Divider(),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('My Cart', style: theme.textTheme.displayLarge?.copyWith(fontSize: 32)),
+                        const SizedBox(height: 24),
+                        ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: cart.length,
+                          separatorBuilder: (context, index) => const SizedBox(height: 16),
+                          itemBuilder: (context, index) {
+                            final item = cart[index];
+                            return _CartItem(
+                              title: item.name,
+                              subtitle: '${item.calories} kcal',
+                              price: '\$${item.price.toStringAsFixed(2)}',
+                              quantity: item.quantity,
+                              imageUrl: item.imageUrl,
+                              onRemove: () => cartNotifier.removeItem(item.menuItemId),
+                              onIncrement: () => cartNotifier.updateQuantity(item.menuItemId, item.quantity + 1),
+                              onDecrement: () => cartNotifier.updateQuantity(item.menuItemId, item.quantity - 1),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Total', style: theme.textTheme.headlineMedium?.copyWith(fontSize: 20)),
-                    Text('\$32.89', style: theme.textTheme.headlineMedium?.copyWith(fontSize: 20)),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: () {
-                    context.push('/cart/checkout');
-                  },
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                
+                // Order Summary Sticky
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 30, offset: const Offset(0, -8))
+                    ],
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(24))
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Text('Proceed to Checkout'),
-                      SizedBox(width: 8),
-                      Icon(Icons.arrow_forward),
+                      Text('Order Summary', style: theme.textTheme.headlineMedium?.copyWith(fontSize: 20)),
+                      const SizedBox(height: 16),
+                      _SummaryRow(label: 'Subtotal', value: '\$${cartNotifier.subtotal.toStringAsFixed(2)}'),
+                      const SizedBox(height: 8),
+                      _SummaryRow(label: 'Delivery Fee', value: '\$${cartNotifier.deliveryFee.toStringAsFixed(2)}'),
+                      const SizedBox(height: 8),
+                      _SummaryRow(label: 'Taxes & Fees (8%)', value: '\$${cartNotifier.tax.toStringAsFixed(2)}'),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16.0),
+                        child: Divider(),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('Total', style: theme.textTheme.headlineMedium?.copyWith(fontSize: 20)),
+                          Text('\$${cartNotifier.total.toStringAsFixed(2)}', style: theme.textTheme.headlineMedium?.copyWith(fontSize: 20, color: theme.colorScheme.primary)),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: () {
+                          context.push('/cart/checkout');
+                        },
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text('Proceed to Checkout'),
+                            SizedBox(width: 8),
+                            Icon(Icons.arrow_forward),
+                          ],
+                        ),
+                      )
                     ],
                   ),
                 )
               ],
             ),
-          )
-        ],
-      ),
       bottomNavigationBar: BottomNavBar(
         currentIndex: 2,
         onTap: (index) {
@@ -133,6 +158,9 @@ class _CartItem extends StatelessWidget {
   final String price;
   final int quantity;
   final String imageUrl;
+  final VoidCallback onRemove;
+  final VoidCallback onIncrement;
+  final VoidCallback onDecrement;
 
   const _CartItem({
     required this.title,
@@ -140,6 +168,9 @@ class _CartItem extends StatelessWidget {
     required this.price,
     required this.quantity,
     required this.imageUrl,
+    required this.onRemove,
+    required this.onIncrement,
+    required this.onDecrement,
   });
 
   @override
@@ -171,7 +202,10 @@ class _CartItem extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(child: Text(title, style: theme.textTheme.headlineMedium?.copyWith(fontSize: 18))),
-                    Icon(Icons.close, color: theme.colorScheme.onSurfaceVariant),
+                    GestureDetector(
+                      onTap: onRemove,
+                      child: Icon(Icons.close, color: theme.colorScheme.onSurfaceVariant),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 4),
@@ -190,11 +224,23 @@ class _CartItem extends StatelessWidget {
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.remove, size: 20, color: theme.colorScheme.onSurfaceVariant),
-                          const SizedBox(width: 12),
+                          GestureDetector(
+                            onTap: onDecrement,
+                            child: Padding(
+                              padding: const EdgeInsets.all(4.0),
+                              child: Icon(Icons.remove, size: 20, color: theme.colorScheme.onSurfaceVariant),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
                           Text('$quantity', style: theme.textTheme.labelMedium),
-                          const SizedBox(width: 12),
-                          const Icon(Icons.add, size: 20),
+                          const SizedBox(width: 8),
+                          GestureDetector(
+                            onTap: onIncrement,
+                            child: const Padding(
+                              padding: const EdgeInsets.all(4.0),
+                              child: Icon(Icons.add, size: 20),
+                            ),
+                          ),
                         ],
                       ),
                     )
