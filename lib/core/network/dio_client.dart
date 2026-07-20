@@ -31,6 +31,14 @@ Dio buildDioClient(String baseUrl, TokenStorage tokenStorage) {
         if (userId != null && userId.isNotEmpty) {
           options.headers['X-User-Id'] = userId;
         }
+        // Owner/admin scoped services (restaurant, menu...) additionally
+        // authorize on X-User-Role. The gateway injects it from the JWT in
+        // production; calling the services directly, we forward the role we
+        // persisted at login so RESTAURANT_OWNER endpoints don't 403.
+        final role = await tokenStorage.readRole();
+        if (role != null && role.isNotEmpty) {
+          options.headers['X-User-Role'] = role;
+        }
         handler.next(options);
       },
     ),
