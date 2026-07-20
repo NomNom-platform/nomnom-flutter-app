@@ -1,1 +1,0 @@
- D:\\Edu\\Semester8\\NomNom\\nomnom-flutter-app\\.dart_tool\\flutter_build\\674992b9bbf26d4abe90b016d14ad35d\\native_assets.json: 

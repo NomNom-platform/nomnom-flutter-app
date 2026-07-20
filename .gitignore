@@ -6,3 +6,10 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Flutter/Dart tooling cache — machine-specific, must never be committed
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+*.iml
