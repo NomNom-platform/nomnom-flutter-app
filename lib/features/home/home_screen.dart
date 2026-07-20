@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_constants.dart';
 import '../../shared/widgets/bottom_nav_bar.dart';
 import 'package:go_router/go_router.dart';
+import '../restaurant/presentation/controllers/customer_restaurant_controller.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final restaurantsAsync = ref.watch(customerRestaurantsProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: Row(
@@ -123,22 +127,31 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 24),
             Text('Nearby Restaurants', style: theme.textTheme.headlineMedium?.copyWith(fontSize: 20)),
             const SizedBox(height: 16),
-            _RestaurantCard(
-              title: 'Artisan Pizza Co.',
-              subtitle: 'Italian • Pizza • \$\$',
-              rating: '4.8',
-              time: '20-30 min',
-              imageUrl: AppConstants.mockPizza,
-              onTap: () => context.push('/restaurant/1'),
-            ),
-            const SizedBox(height: 16),
-            _RestaurantCard(
-              title: 'Burger Joint',
-              subtitle: 'American • Burgers • \$',
-              rating: '4.6',
-              time: '15-25 min',
-              imageUrl: AppConstants.mockBurger,
-              onTap: () => context.push('/restaurant/2'),
+            restaurantsAsync.when(
+              data: (restaurants) {
+                if (restaurants.isEmpty) {
+                  return const Center(child: Text('No active restaurants found.'));
+                }
+                return ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: restaurants.length,
+                  separatorBuilder: (context, index) => const SizedBox(height: 16),
+                  itemBuilder: (context, index) {
+                    final r = restaurants[index];
+                    return _RestaurantCard(
+                      title: r.name,
+                      subtitle: '${r.cuisineType} • ${r.address}',
+                      rating: '4.8',
+                      time: '20-30 min',
+                      imageUrl: (r.imageUrl != null && r.imageUrl!.isNotEmpty) ? r.imageUrl! : AppConstants.mockPizza,
+                      onTap: () => context.push('/restaurant/${r.id}'),
+                    );
+                  },
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, stack) => Center(child: Text('Error loading restaurants: $err')),
             ),
           ],
         ),

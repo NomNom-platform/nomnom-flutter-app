@@ -3,6 +3,7 @@ import '../../../../core/error/failure.dart';
 import '../../../../core/models/page_response.dart';
 import '../../data/models/order_model.dart';
 import '../../data/models/order_request_model.dart';
+import '../../data/models/create_order_response_model.dart';
 import '../providers/order_di.dart';
 
 part 'order_controller.g.dart';
@@ -22,19 +23,19 @@ class OrderController extends _$OrderController {
     );
   }
 
-  Future<bool> placeOrder(OrderRequestModel request) async {
+  Future<CreateOrderResponseModel?> placeOrder(OrderRequestModel request) async {
     state = const AsyncValue.loading();
     final result = await ref.read(orderRepositoryProvider).placeOrder(request);
     
     return result.fold(
       (failure) {
         state = AsyncValue.error(failure, StackTrace.current);
-        return false;
+        return null;
       },
-      (order) {
+      (response) {
         // Refresh the orders list
         ref.invalidateSelf();
-        return true;
+        return response;
       },
     );
   }

@@ -9,6 +9,7 @@ class OrderRequestModel with _$OrderRequestModel {
   const factory OrderRequestModel({
     required String restaurantId,
     required String deliveryAddress,
+    required String paymentMethod,
     String? note,
     @Default([]) List<OrderItemModel> items,
   }) = _OrderRequestModel;

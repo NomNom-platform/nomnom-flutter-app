@@ -11,6 +11,7 @@ _$OrderRequestModelImpl _$$OrderRequestModelImplFromJson(
     _$OrderRequestModelImpl(
       restaurantId: json['restaurantId'] as String,
       deliveryAddress: json['deliveryAddress'] as String,
+      paymentMethod: json['paymentMethod'] as String,
       note: json['note'] as String?,
       items: (json['items'] as List<dynamic>?)
               ?.map((e) => OrderItemModel.fromJson(e as Map<String, dynamic>))
@@ -23,6 +24,7 @@ Map<String, dynamic> _$$OrderRequestModelImplToJson(
     <String, dynamic>{
       'restaurantId': instance.restaurantId,
       'deliveryAddress': instance.deliveryAddress,
+      'paymentMethod': instance.paymentMethod,
       'note': instance.note,
       'items': instance.items,
     };

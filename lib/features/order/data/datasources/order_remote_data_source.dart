@@ -2,9 +2,10 @@ import 'package:dio/dio.dart';
 import '../../../../core/models/page_response.dart';
 import '../models/order_model.dart';
 import '../models/order_request_model.dart';
+import '../models/create_order_response_model.dart';
 
 abstract class OrderRemoteDataSource {
-  Future<OrderModel> placeOrder(OrderRequestModel request);
+  Future<CreateOrderResponseModel> placeOrder(OrderRequestModel request);
   Future<PageResponse<OrderModel>> getMyOrders(int page, int size);
   Future<OrderModel> getOrderById(String id);
   Future<OrderModel> updateOrderStatus(String id, String status);
@@ -16,9 +17,9 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
   OrderRemoteDataSourceImpl(this.dio);
 
   @override
-  Future<OrderModel> placeOrder(OrderRequestModel request) async {
+  Future<CreateOrderResponseModel> placeOrder(OrderRequestModel request) async {
     final response = await dio.post('/api/orders', data: request.toJson());
-    return OrderModel.fromJson(response.data);
+    return CreateOrderResponseModel.fromJson(response.data as Map<String, dynamic>);
   }
 
   @override

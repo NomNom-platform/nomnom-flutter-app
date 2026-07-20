@@ -226,12 +226,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               subtitle: 'Name, Phone, Password',
             ),
             const SizedBox(height: 16),
-            _SettingsItem(
-              icon: Icons.monitor_heart,
-              iconColor: theme.colorScheme.secondary,
-              iconBgColor: theme.colorScheme.secondaryFixed.withOpacity(0.3),
-              title: 'Health Data',
-              subtitle: 'Macros, Allergies, Preferences',
+            GestureDetector(
+              onTap: () => context.push('/health-setup'),
+              child: _SettingsItem(
+                icon: Icons.monitor_heart,
+                iconColor: theme.colorScheme.secondary,
+                iconBgColor: theme.colorScheme.secondaryFixed.withOpacity(0.3),
+                title: 'Health Data',
+                subtitle: 'Macros, Allergies, Preferences',
+              ),
             ),
             const SizedBox(height: 16),
             _SettingsItem(

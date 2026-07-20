@@ -7,16 +7,18 @@ import '../datasources/order_remote_data_source.dart';
 import '../models/order_model.dart';
 import '../models/order_request_model.dart';
 
+import '../models/create_order_response_model.dart';
+
 class OrderRepositoryImpl implements OrderRepository {
   final OrderRemoteDataSource remoteDataSource;
 
   OrderRepositoryImpl(this.remoteDataSource);
 
   @override
-  Future<Result<OrderModel>> placeOrder(OrderRequestModel request) async {
+  Future<Result<CreateOrderResponseModel>> placeOrder(OrderRequestModel request) async {
     try {
-      final order = await remoteDataSource.placeOrder(request);
-      return Success(order);
+      final response = await remoteDataSource.placeOrder(request);
+      return Success(response);
     } on DioException catch (e) {
       return Fail(ServerFailure(e.response?.data?['message'] ??
           e.message ??

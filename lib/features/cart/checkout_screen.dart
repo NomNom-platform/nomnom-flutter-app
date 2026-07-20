@@ -6,6 +6,7 @@ import '../order/data/models/order_item_model.dart';
 import '../order/data/models/order_request_model.dart';
 import '../order/presentation/controllers/order_controller.dart';
 import 'presentation/controllers/cart_controller.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
   const CheckoutScreen({super.key});
@@ -13,6 +14,7 @@ class CheckoutScreen extends ConsumerStatefulWidget {
   @override
   ConsumerState<CheckoutScreen> createState() => _CheckoutScreenState();
 }
+
 
 class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   int _selectedPayment = 2; // 0: VNPay, 1: Stripe, 2: Cash
@@ -24,6 +26,22 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   void dispose() {
     _noteController.dispose();
     super.dispose();
+  }
+
+  Future<void> _openPaymentWebView(String urlString) async {
+    final url = Uri.parse(urlString);
+    if (await canLaunchUrl(url)) {
+      await launchUrl(
+        url,
+        mode: LaunchMode.externalApplication,
+      );
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open VNPay payment gateway.')),
+        );
+      }
+    }
   }
 
   Future<void> _handlePlaceOrder() async {
@@ -51,20 +69,30 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       );
     }).toList();
 
+    final String paymentMethod;
+    if (_selectedPayment == 0) {
+      paymentMethod = 'VNPAY';
+    } else if (_selectedPayment == 1) {
+      paymentMethod = 'CARD';
+    } else {
+      paymentMethod = 'CASH';
+    }
+
     final request = OrderRequestModel(
       restaurantId: cartNotifier.restaurantId ?? '',
       deliveryAddress: _deliveryAddress,
+      paymentMethod: paymentMethod,
       note: _noteController.text,
       items: orderItems,
     );
 
-    final success = await ref.read(orderControllerProvider.notifier).placeOrder(request);
+    final response = await ref.read(orderControllerProvider.notifier).placeOrder(request);
 
     setState(() {
       _isPlacingOrder = false;
     });
 
-    if (success) {
+    if (response != null) {
       // Clear the cart
       cartNotifier.clearCart();
 
@@ -73,6 +101,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Order placed successfully!')),
         );
+        
+        if (paymentMethod == 'VNPAY' && response.paymentUrl != null && response.paymentUrl!.isNotEmpty) {
+          await _openPaymentWebView(response.paymentUrl!);
+        }
+        
         // Go to order tracking
         context.go('/track-order');
       }
