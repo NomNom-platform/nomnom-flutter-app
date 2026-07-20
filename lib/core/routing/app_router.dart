@@ -17,6 +17,7 @@ import '../../features/owner/owner_dashboard_screen.dart';
 import '../../features/owner/owner_restaurant_screen.dart';
 import '../../features/owner/owner_menu_screen.dart';
 import '../../features/owner/owner_orders_screen.dart';
+import '../../features/owner/owner_settings_screen.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 final GlobalKey<NavigatorState> _shellNavigatorKey = GlobalKey<NavigatorState>();
@@ -110,6 +111,11 @@ final router = GoRouter(
       path: '/owner/orders',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const OwnerOrdersScreen(),
+    ),
+    GoRoute(
+      path: '/owner/settings',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const OwnerSettingsScreen(),
     ),
   ],
 );
