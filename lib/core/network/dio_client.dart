@@ -23,6 +23,14 @@ Dio buildDioClient(String baseUrl, TokenStorage tokenStorage) {
         if (token != null && token.isNotEmpty) {
           options.headers['Authorization'] = 'Bearer $token';
         }
+        // Downstream services (recommendation, order, restaurant...) trust
+        // X-User-Id directly instead of decoding the JWT themselves — in
+        // production this is injected by the API Gateway after validating
+        // the token; since the app calls services directly, we set it here.
+        final userId = await tokenStorage.readUserId();
+        if (userId != null && userId.isNotEmpty) {
+          options.headers['X-User-Id'] = userId;
+        }
         handler.next(options);
       },
     ),

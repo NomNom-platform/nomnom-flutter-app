@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/home/home_screen.dart';
-import '../../features/recommendation/recommendations_screen.dart';
+import '../../features/recommendation/presentation/screens/recommendations_screen.dart';
 import '../../features/cart/cart_screen.dart';
 import '../../features/notification/notifications_screen.dart';
 import '../../features/profile/profile_screen.dart';
