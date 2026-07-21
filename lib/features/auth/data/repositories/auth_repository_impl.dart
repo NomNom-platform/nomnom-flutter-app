@@ -87,6 +87,18 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<Result<AuthSession>> googleLogin({required String idToken}) async {
+    try {
+      final model = await _remote.googleLogin(idToken: idToken);
+      final session = model.toEntity();
+      await _persistSession(session);
+      return Result.success(session);
+    } on DioException catch (e) {
+      return Result.failure(mapDioException(e));
+    }
+  }
+
+  @override
   Future<void> logout() => _tokenStorage.clear();
 
   Future<void> _persistSession(AuthSession session) {

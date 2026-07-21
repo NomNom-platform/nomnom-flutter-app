@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../controllers/auth_controller.dart';
 import '../../domain/entities/user_role.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -56,12 +57,106 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  Future<void> _handleGoogleLogin() async {
+    try {
+      final googleSignIn = GoogleSignIn.instance;
+      final account = await googleSignIn.authenticate();
+      if (account != null) {
+        final auth = await account.authentication;
+        final idToken = auth.idToken;
+        if (idToken != null) {
+          final success = await ref.read(authControllerProvider.notifier).loginWithGoogle(idToken: idToken);
+          if (success && mounted) {
+            final role = ref.read(authControllerProvider).role;
+            if (role == UserRole.restaurantOwner) {
+              context.go('/owner/dashboard');
+            } else {
+              context.go('/home');
+            }
+          }
+          return;
+        }
+      }
+      throw Exception('Could not retrieve idToken from Google sign-in.');
+    } catch (e) {
+      if (mounted) {
+        _showGoogleBypassDialog(e.toString());
+      }
+    }
+  }
+
+  void _showGoogleBypassDialog(String error) {
+    final theme = Theme.of(context);
+    final tokenController = TextEditingController(text: 'mock-google-id-token-12345');
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.vpn_key, color: theme.colorScheme.primary),
+            const SizedBox(width: 8),
+            const Expanded(
+              child: Text('Google Verification Bypass'),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Google Client Sign-In was cancelled or not fully configured on this device/client.\n\nDetail: $error\n\nWould you like to test the backend /api/auth/google endpoint using a custom or mock ID Token?',
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: tokenController,
+              decoration: const InputDecoration(
+                labelText: 'Google id_token',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final success = await ref
+                  .read(authControllerProvider.notifier)
+                  .loginWithGoogle(idToken: tokenController.text);
+              if (success && mounted) {
+                final role = ref.read(authControllerProvider).role;
+                if (role == UserRole.restaurantOwner) {
+                  context.go('/owner/dashboard');
+                } else {
+                  context.go('/home');
+                }
+              } else if (mounted) {
+                final failure = ref.read(authControllerProvider).failure;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(failure?.message ?? 'Google Login failed.')),
+                );
+              }
+            },
+            child: const Text('Send to Backend'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final authState = ref.watch(authControllerProvider);
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         leading: BackButton(
           onPressed: () {
@@ -198,7 +293,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     children: [
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: () {},
+                          onPressed: () => _handleGoogleLogin(),
                           icon: const Icon(Icons.login),
                           label: const Text('Google'),
                           style: OutlinedButton.styleFrom(

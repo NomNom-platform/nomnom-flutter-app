@@ -14,7 +14,8 @@ _$OrderRequestModelImpl _$$OrderRequestModelImplFromJson(
       paymentMethod: json['paymentMethod'] as String,
       note: json['note'] as String?,
       items: (json['items'] as List<dynamic>?)
-              ?.map((e) => OrderItemModel.fromJson(e as Map<String, dynamic>))
+              ?.map((e) =>
+                  OrderItemRequestModel.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const [],
     );

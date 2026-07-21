@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../core/utils/currency_formatter.dart';
 import '../../core/theme/colors.dart';
 import '../auth/presentation/controllers/auth_controller.dart';
 import '../menu/domain/entities/menu_category.dart';
@@ -363,14 +364,9 @@ String _mimeFromName(String name) {
   if (lower.endsWith('.gif')) return 'image/gif';
   return 'image/jpeg';
 }
-
-/// Browses an image from the device and returns it as a base64 data URL —
-/// same approach the `fe` frontend uses so the backend keeps storing
-/// `imageUrl` as a plain string. Works on web and mobile. Returns null on
-/// cancel; throws with a readable message on failure/too-large.
-Future<String?> _pickMenuImage() async {
+Future<String?> _pickMenuImage(ImageSource source) async {
   final image = await _menuImagePicker.pickImage(
-    source: ImageSource.gallery,
+    source: source,
     maxWidth: 1920,
     maxHeight: 1080,
     imageQuality: 85,
@@ -530,7 +526,7 @@ extension _OwnerMenuActions on _OwnerMenuScreenState {
                           child: TextFormField(
                             controller: priceController,
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            decoration: const InputDecoration(labelText: 'Price (\$)'),
+                            decoration: const InputDecoration(labelText: 'Giá (VND)'),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -605,8 +601,28 @@ extension _OwnerMenuActions on _OwnerMenuScreenState {
                         Expanded(
                           child: OutlinedButton.icon(
                             onPressed: () async {
+                              final ImageSource? source = await showDialog<ImageSource>(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  title: const Text('Chọn nguồn ảnh'),
+                                  content: const Text('Bạn muốn chụp ảnh món ăn trực tiếp từ camera hay chọn từ thư viện thiết bị?'),
+                                  actions: [
+                                    TextButton.icon(
+                                      onPressed: () => Navigator.pop(ctx, ImageSource.camera),
+                                      icon: const Icon(Icons.camera_alt_rounded),
+                                      label: const Text('Máy ảnh'),
+                                    ),
+                                    TextButton.icon(
+                                      onPressed: () => Navigator.pop(ctx, ImageSource.gallery),
+                                      icon: const Icon(Icons.photo_library_rounded),
+                                      label: const Text('Thư viện'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              if (source == null) return;
                               try {
-                                final dataUrl = await _pickMenuImage();
+                                final dataUrl = await _pickMenuImage(source);
                                 if (dataUrl != null) {
                                   setSheetState(() => imageUrlController.text = dataUrl);
                                 }
@@ -614,8 +630,8 @@ extension _OwnerMenuActions on _OwnerMenuScreenState {
                                 if (context.mounted) _snack(e.toString(), isError: true);
                               }
                             },
-                            icon: const Icon(Icons.photo_library_outlined),
-                            label: const Text('Browse from device'),
+                            icon: const Icon(Icons.photo_camera_rounded),
+                            label: const Text('Tải ảnh món ăn'),
                           ),
                         ),
                       ],
@@ -757,7 +773,7 @@ class _MenuItemCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        '\$${item.price.toStringAsFixed(2)}',
+                        formatPrice(item.price),
                         style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.primary),
                       ),
                     ],

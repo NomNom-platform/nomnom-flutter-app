@@ -9,6 +9,7 @@ enum OrderStatus {
   @JsonValue('READY') ready,
   @JsonValue('OUT_FOR_DELIVERY') outForDelivery,
   @JsonValue('DELIVERING') delivering,
+  @JsonValue('SHIPPING') shipping,
   @JsonValue('DELIVERED') delivered,
   @JsonValue('CANCELLED') cancelled,
 }

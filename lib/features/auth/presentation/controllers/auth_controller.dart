@@ -28,6 +28,21 @@ class AuthController extends _$AuthController {
     );
   }
 
+  Future<bool> loginWithGoogle({required String idToken}) async {
+    state = state.copyWith(isLoading: true, failure: null);
+    final result = await ref.read(authRepositoryProvider).googleLogin(idToken: idToken);
+    return result.fold(
+      (failure) {
+        state = state.copyWith(isLoading: false, failure: failure);
+        return false;
+      },
+      (session) {
+        state = state.copyWith(isLoading: false, isAuthenticated: true, role: session.role, failure: null);
+        return true;
+      },
+    );
+  }
+
   Future<bool> register({
     required String email,
     required String password,

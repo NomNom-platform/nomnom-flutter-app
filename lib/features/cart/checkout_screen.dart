@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../core/constants/app_constants.dart';
-import '../order/data/models/order_item_model.dart';
+import '../../core/utils/currency_formatter.dart';
+import '../../shared/widgets/user_avatar.dart';
+import '../order/data/models/order_item_request_model.dart';
 import '../order/data/models/order_request_model.dart';
 import '../order/presentation/controllers/order_controller.dart';
 import 'presentation/controllers/cart_controller.dart';
@@ -15,16 +16,16 @@ class CheckoutScreen extends ConsumerStatefulWidget {
   ConsumerState<CheckoutScreen> createState() => _CheckoutScreenState();
 }
 
-
 class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   int _selectedPayment = 2; // 0: VNPay, 1: Stripe, 2: Cash
   final TextEditingController _noteController = TextEditingController();
-  final String _deliveryAddress = '123 Culinary Boulevard, Apt 4B, Foodville, CA 90210';
+  final TextEditingController _addressController = TextEditingController();
   bool _isPlacingOrder = false;
 
   @override
   void dispose() {
     _noteController.dispose();
+    _addressController.dispose();
     super.dispose();
   }
 
@@ -38,7 +39,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not open VNPay payment gateway.')),
+          const SnackBar(content: Text('Không thể mở cổng thanh toán VNPay.')),
         );
       }
     }
@@ -50,7 +51,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
     if (cart.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Your cart is empty.')),
+        const SnackBar(content: Text('Giỏ hàng trống.')),
       );
       return;
     }
@@ -60,12 +61,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     });
 
     final orderItems = cart.map((item) {
-      return OrderItemModel(
+      return OrderItemRequestModel(
         menuItemId: item.menuItemId,
-        name: item.name,
         quantity: item.quantity,
-        unitPrice: item.price,
-        calories: item.calories,
       );
     }).toList();
 
@@ -80,7 +78,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
     final request = OrderRequestModel(
       restaurantId: cartNotifier.restaurantId ?? '',
-      deliveryAddress: _deliveryAddress,
+      deliveryAddress: _addressController.text.trim().isEmpty ? 'Địa chỉ chưa điền' : _addressController.text.trim(),
       paymentMethod: paymentMethod,
       note: _noteController.text,
       items: orderItems,
@@ -99,7 +97,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       // Show success popup/snack
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Order placed successfully!')),
+          const SnackBar(
+            content: Text('Đặt đơn hàng thành công!'),
+            behavior: SnackBarBehavior.floating,
+          ),
         );
         
         if (paymentMethod == 'VNPAY' && response.paymentUrl != null && response.paymentUrl!.isNotEmpty) {
@@ -112,7 +113,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to place order. Please try again.')),
+          const SnackBar(content: Text('Không thể đặt hàng. Vui lòng thử lại.')),
         );
       }
     }
@@ -128,10 +129,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       return Scaffold(
         appBar: AppBar(
           leading: BackButton(onPressed: () => context.pop()),
-          title: const Text('Checkout'),
+          title: const Text('Thanh toán'),
         ),
         body: const Center(
-          child: Text('No items to check out.'),
+          child: Text('Không có sản phẩm nào cần thanh toán.'),
         ),
       );
     }
@@ -139,17 +140,13 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: BackButton(onPressed: () => context.pop()),
-        title: Text('Delivery to Home', style: theme.textTheme.headlineMedium?.copyWith(fontSize: 16)),
+        title: Text('Xác nhận đặt hàng', style: theme.textTheme.headlineMedium?.copyWith(fontSize: 16, fontWeight: FontWeight.bold)),
         centerTitle: true,
         backgroundColor: theme.colorScheme.surface,
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16.0),
-            child: CircleAvatar(
-              backgroundImage: const NetworkImage(AppConstants.mockUserAvatars),
-              backgroundColor: theme.colorScheme.surfaceVariant,
-              radius: 16,
-            ),
+            child: const UserAvatar(radius: 16),
           )
         ],
       ),
@@ -158,15 +155,15 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Delivery Address
+            // Địa chỉ nhận hàng
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: theme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: theme.colorScheme.surfaceContainerLow),
+                border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3)),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, 4))
+                  BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 16, offset: const Offset(0, 4))
                 ]
               ),
               child: Row(
@@ -175,10 +172,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer.withOpacity(0.2),
+                      color: theme.colorScheme.primaryContainer.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(Icons.home, color: theme.colorScheme.primary),
+                    child: Icon(Icons.home_rounded, color: theme.colorScheme.primary),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -188,15 +185,26 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text('Home', style: theme.textTheme.labelMedium),
-                            Text('Edit', style: theme.textTheme.labelMedium?.copyWith(color: theme.colorScheme.primary)),
+                            Text('Nhà riêng', style: theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.bold)),
+                            GestureDetector(
+                              onTap: () => _addressController.clear(),
+                              child: Text('Xóa', style: theme.textTheme.labelMedium?.copyWith(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
+                            ),
                           ],
                         ),
                         const SizedBox(height: 4),
-                        Text(
-                          _deliveryAddress,
+                        TextField(
+                          controller: _addressController,
                           style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                        )
+                          decoration: InputDecoration(
+                            hintText: 'Nhập địa chỉ giao hàng của bạn...',
+                            hintStyle: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5)),
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.zero,
+                            isDense: true,
+                          ),
+                          maxLines: 2,
+                        ),
                       ],
                     ),
                   )
@@ -205,43 +213,50 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             ),
             
             const SizedBox(height: 24),
-            Text('Payment Method', style: theme.textTheme.labelMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+            Text(
+              'Phương thức thanh toán', 
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             const SizedBox(height: 8),
             
+            // Lựa chọn cổng thanh toán cao cấp
             Container(
               decoration: BoxDecoration(
                 color: theme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: theme.colorScheme.surfaceContainerLow),
+                border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3)),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, 4))
+                  BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 16, offset: const Offset(0, 4))
                 ]
               ),
               child: Column(
                 children: [
                   _PaymentOption(
-                    title: 'VNPay E-Wallet',
-                    icon: Icons.qr_code_scanner,
+                    title: 'Ví điện tử VNPay (Sandbox)',
+                    icon: Icons.qr_code_scanner_rounded,
                     iconColor: theme.colorScheme.secondary,
-                    bgColor: theme.colorScheme.secondaryContainer.withOpacity(0.2),
+                    bgColor: theme.colorScheme.secondaryContainer.withValues(alpha: 0.2),
                     isSelected: _selectedPayment == 0,
                     onTap: () => setState(() => _selectedPayment = 0),
                   ),
                   const Divider(height: 1),
                   _PaymentOption(
-                    title: 'Credit/Debit Card (Stripe)',
-                    icon: Icons.credit_card,
+                    title: 'Thẻ tín dụng / Thẻ ghi nợ (Stripe)',
+                    icon: Icons.credit_card_rounded,
                     iconColor: theme.colorScheme.tertiary,
-                    bgColor: theme.colorScheme.tertiaryContainer.withOpacity(0.2),
+                    bgColor: theme.colorScheme.tertiaryContainer.withValues(alpha: 0.2),
                     isSelected: _selectedPayment == 1,
                     onTap: () => setState(() => _selectedPayment = 1),
                   ),
                   const Divider(height: 1),
                   _PaymentOption(
-                    title: 'Cash on Delivery',
-                    icon: Icons.payments,
+                    title: 'Thanh toán tiền mặt khi nhận hàng (COD)',
+                    icon: Icons.payments_rounded,
                     iconColor: theme.colorScheme.primary,
-                    bgColor: theme.colorScheme.primaryContainer.withOpacity(0.2),
+                    bgColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.2),
                     isSelected: _selectedPayment == 2,
                     onTap: () => setState(() => _selectedPayment = 2),
                   ),
@@ -250,36 +265,43 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             ),
             
             const SizedBox(height: 24),
-            Text('Delivery Note', style: theme.textTheme.labelMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+            Text(
+              'Ghi chú giao hàng', 
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             const SizedBox(height: 8),
             TextFormField(
               controller: _noteController,
               maxLines: 2,
               decoration: const InputDecoration(
-                hintText: 'e.g. Leave at door, ring bell...',
+                hintText: 'Ví dụ: Để trước cửa, bấm chuông khi tới...',
                 prefixIcon: Padding(
                   padding: EdgeInsets.only(bottom: 16.0),
-                  child: Icon(Icons.edit_note),
+                  child: Icon(Icons.edit_note_rounded),
                 ),
                 contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               ),
             ),
             
             const SizedBox(height: 24),
+            // Tóm tắt đơn đặt hàng
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: theme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: theme.colorScheme.surfaceContainerLow),
+                border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3)),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, 4))
+                  BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 16, offset: const Offset(0, 4))
                 ]
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Order Summary', style: theme.textTheme.labelMedium),
+                  Text('Tóm tắt đơn hàng', style: theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
                   ListView.separated(
                     shrinkWrap: true,
@@ -291,7 +313,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       return _SummaryItemRow(
                         quantity: '${item.quantity}x',
                         title: item.name,
-                        price: '\$${(item.price * item.quantity).toStringAsFixed(2)}',
+                        price: formatPrice(item.price * item.quantity),
                       );
                     },
                   ),
@@ -299,23 +321,30 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     padding: EdgeInsets.symmetric(vertical: 12.0),
                     child: Divider(),
                   ),
-                  _SummaryRow(label: 'Subtotal', value: '\$${cartNotifier.subtotal.toStringAsFixed(2)}', theme: theme),
+                  _SummaryRow(label: 'Tạm tính', value: formatPrice(cartNotifier.subtotal), theme: theme),
                   const SizedBox(height: 8),
-                  _SummaryRow(label: 'Delivery Fee', value: '\$${cartNotifier.deliveryFee.toStringAsFixed(2)}', theme: theme),
+                  _SummaryRow(label: 'Phí giao hàng', value: formatPrice(cartNotifier.deliveryFee), theme: theme),
                   const SizedBox(height: 8),
-                  _SummaryRow(label: 'Taxes & Fees (8%)', value: '\$${cartNotifier.tax.toStringAsFixed(2)}', theme: theme),
+                  _SummaryRow(label: 'Thuế & phí (8%)', value: formatPrice(cartNotifier.tax), theme: theme),
                   const SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Total', style: theme.textTheme.labelMedium),
-                      Text('\$${cartNotifier.total.toStringAsFixed(2)}', style: theme.textTheme.headlineMedium?.copyWith(fontSize: 18, color: theme.colorScheme.primary)),
+                      Text('Tổng tiền', style: theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.bold)),
+                      Text(
+                        formatPrice(cartNotifier.total),
+                        style: theme.textTheme.headlineMedium?.copyWith(
+                          fontSize: 18, 
+                          fontWeight: FontWeight.w800, 
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
                     ],
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 120), // Space for sticky bottom CTA
+            const SizedBox(height: 120), // Khoảng trống cho thanh đặt hàng dưới cùng
           ],
         ),
       ),
@@ -324,36 +353,44 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 30, offset: const Offset(0, -8))
+            BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 24, offset: const Offset(0, -8))
           ],
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24))
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          border: Border(top: BorderSide(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3))),
         ),
         child: SafeArea(
-          child: ElevatedButton(
-            onPressed: _isPlacingOrder ? null : _handlePlaceOrder,
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.all(20),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(_isPlacingOrder ? 'Placing Order...' : 'Place Order', style: const TextStyle(fontSize: 18)),
-                if (!_isPlacingOrder)
-                  Row(
-                    children: [
-                      Text('\$${cartNotifier.total.toStringAsFixed(2)}', style: const TextStyle(fontSize: 18, color: Colors.white70)),
-                      const SizedBox(width: 12),
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.arrow_forward, size: 16),
-                      )
-                    ],
-                  )
-              ],
+          child: SizedBox(
+            width: double.infinity,
+            height: 54,
+            child: ElevatedButton(
+              onPressed: _isPlacingOrder ? null : _handlePlaceOrder,
+              style: ElevatedButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                elevation: 0,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(_isPlacingOrder ? 'Đang đặt đơn hàng...' : 'Đặt đơn ngay', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  if (!_isPlacingOrder)
+                    Row(
+                      children: [
+                        Text(formatPrice(cartNotifier.total), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white70)),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Colors.white24,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.arrow_forward_rounded, size: 14),
+                        )
+                      ],
+                    )
+                ],
+              ),
             ),
           ),
         ),
@@ -386,7 +423,7 @@ class _PaymentOption extends StatelessWidget {
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(16),
-        color: isSelected ? theme.colorScheme.surfaceContainerLowest : Colors.transparent,
+        color: isSelected ? theme.colorScheme.primaryContainer.withValues(alpha: 0.05) : Colors.transparent,
         child: Row(
           children: [
             Container(
@@ -402,7 +439,7 @@ class _PaymentOption extends StatelessWidget {
               child: Text(
                 title,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 ),
               ),
             ),
@@ -433,12 +470,12 @@ class _SummaryItemRow extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.2),
+            color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(4),
           ),
           child: Text(
             quantity,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Theme.of(context).colorScheme.primary),
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold),
           ),
         ),
         const SizedBox(width: 8),
@@ -450,7 +487,7 @@ class _SummaryItemRow extends StatelessWidget {
         ),
         Text(
           price,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, fontWeight: FontWeight.w600),
         ),
       ],
     );
@@ -469,8 +506,8 @@ class _SummaryRow extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-        Text(value, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+        Text(label, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant, fontSize: 13)),
+        Text(value, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant, fontSize: 13, fontWeight: FontWeight.w600)),
       ],
     );
   }

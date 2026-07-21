@@ -11,6 +11,8 @@ abstract class OrderRemoteDataSource {
   Future<PageResponse<OrderModel>> getRestaurantOrders(String restaurantId, int page, int size);
   Future<OrderModel> getOrderById(String id);
   Future<OrderModel> updateOrderStatus(String id, String status);
+  Future<void> cancelOrder(String id);
+  Future<void> confirmDelivery(String id);
 }
 
 class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
@@ -71,5 +73,15 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
       );
     }
     return OrderModel.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  @override
+  Future<void> cancelOrder(String id) async {
+    await dio.delete('/api/orders/$id');
+  }
+
+  @override
+  Future<void> confirmDelivery(String id) async {
+    await dio.put('/api/orders/$id/delivered');
   }
 }

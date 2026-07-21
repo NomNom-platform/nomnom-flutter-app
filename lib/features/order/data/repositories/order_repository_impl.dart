@@ -85,4 +85,32 @@ class OrderRepositoryImpl implements OrderRepository {
       return Fail(UnknownFailure(e.toString()));
     }
   }
+
+  @override
+  Future<Result<void>> cancelOrder(String id) async {
+    try {
+      await remoteDataSource.cancelOrder(id);
+      return const Success(null);
+    } on DioException catch (e) {
+      return Fail(ServerFailure(e.response?.data?['message'] ??
+          e.message ??
+          'Failed to cancel order'));
+    } catch (e) {
+      return Fail(UnknownFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Result<void>> confirmDelivery(String id) async {
+    try {
+      await remoteDataSource.confirmDelivery(id);
+      return const Success(null);
+    } on DioException catch (e) {
+      return Fail(ServerFailure(e.response?.data?['message'] ??
+          e.message ??
+          'Failed to confirm delivery'));
+    } catch (e) {
+      return Fail(UnknownFailure(e.toString()));
+    }
+  }
 }

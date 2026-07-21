@@ -23,7 +23,7 @@ final healthMetricsProvider = AutoDisposeFutureProvider<HealthMetrics>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef HealthMetricsRef = AutoDisposeFutureProviderRef<HealthMetrics>;
-String _$authControllerHash() => r'776b8a50d4003cc769c9bc8edff7ba9f42165cfb';
+String _$authControllerHash() => r'729235c4a6b65fbc91b861fb2ea8866d1d17ae5a';
 
 /// See also [AuthController].
 @ProviderFor(AuthController)

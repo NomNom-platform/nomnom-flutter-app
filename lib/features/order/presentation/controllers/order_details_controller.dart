@@ -56,4 +56,32 @@ class OrderDetailsController extends _$OrderDetailsController {
   bool _isFinalStatus(OrderStatus status) {
     return status == OrderStatus.delivered || status == OrderStatus.cancelled;
   }
+
+  Future<bool> cancelOrder() async {
+    final result = await ref.read(orderRepositoryProvider).cancelOrder(orderId);
+    return result.fold(
+      (failure) => false,
+      (_) {
+        _timer?.cancel();
+        if (state.hasValue) {
+          state = AsyncValue.data(state.value!.copyWith(status: OrderStatus.cancelled));
+        }
+        return true;
+      },
+    );
+  }
+
+  Future<bool> confirmDelivery() async {
+    final result = await ref.read(orderRepositoryProvider).confirmDelivery(orderId);
+    return result.fold(
+      (failure) => false,
+      (_) {
+        _timer?.cancel();
+        if (state.hasValue) {
+          state = AsyncValue.data(state.value!.copyWith(status: OrderStatus.delivered));
+        }
+        return true;
+      },
+    );
+  }
 }

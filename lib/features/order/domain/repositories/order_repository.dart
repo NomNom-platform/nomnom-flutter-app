@@ -10,4 +10,6 @@ abstract class OrderRepository {
   Future<Result<PageResponse<OrderModel>>> getRestaurantOrders(String restaurantId, {int page = 0, int size = 10});
   Future<Result<OrderModel>> getOrderById(String id);
   Future<Result<OrderModel>> updateOrderStatus(String id, String status);
+  Future<Result<void>> cancelOrder(String id);
+  Future<Result<void>> confirmDelivery(String id);
 }

@@ -26,7 +26,15 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
 
   @override
   Future<NotificationModel> markAsRead(String id) async {
-    final response = await dio.put('/api/notifications/$id/read');
-    return NotificationModel.fromJson(response.data);
+    await dio.put('/api/notifications/$id/read');
+    return NotificationModel(
+      id: id,
+      userId: '',
+      title: '',
+      body: '',
+      type: 'ORDER',
+      isRead: true,
+      createdAt: DateTime.now(),
+    );
   }
 }

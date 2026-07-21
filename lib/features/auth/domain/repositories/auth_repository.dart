@@ -24,5 +24,7 @@ abstract class AuthRepository {
 
   Future<Result<HealthMetrics>> getMyHealth();
 
+  Future<Result<AuthSession>> googleLogin({required String idToken});
+
   Future<void> logout();
 }
