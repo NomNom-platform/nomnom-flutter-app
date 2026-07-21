@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../shared/widgets/bottom_nav_bar.dart';
+import '../../shared/widgets/user_avatar.dart';
 import 'package:go_router/go_router.dart';
-import '../../core/constants/app_constants.dart';
 import 'data/models/notification_model.dart';
 import 'presentation/controllers/notification_controller.dart';
 
@@ -46,11 +46,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16.0),
-            child: CircleAvatar(
-              backgroundImage: const NetworkImage(AppConstants.mockUserAvatars),
-              backgroundColor: theme.colorScheme.surfaceVariant,
-              radius: 16,
-            ),
+            child: const UserAvatar(radius: 16),
           )
         ],
       ),
@@ -315,17 +311,22 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                       ),
                       child: Row(
                         children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(6),
-                            child: Image.network(AppConstants.mockFood1, width: 48, height: 48, fit: BoxFit.cover),
-                          ),
+                            Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.tertiaryContainer.withValues(alpha: 0.5),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Icon(Icons.restaurant_menu_rounded, color: theme.colorScheme.onTertiaryContainer, size: 24),
+                            ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text('Spicy Tofu Power Bowl', style: theme.textTheme.labelMedium),
-                                Text('Green Kitchen • \$14.50', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+                                Text('Green Kitchen • 360.000 đ', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
                               ],
                             ),
                           )

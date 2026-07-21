@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import '../../../../core/models/page_response.dart';
 import '../models/restaurant_model.dart';
 
 /// Talks to restaurant-service (:8082). Returns wire-format models and throws
@@ -15,6 +16,10 @@ abstract class RestaurantRemoteDataSource {
   Future<void> delete(String id);
 
   Future<RestaurantModel> resubmit(String id);
+
+  Future<PageResponse<RestaurantModel>> getAllRestaurants({int page = 0, int size = 10});
+
+  Future<RestaurantModel> getRestaurantById(String id);
 }
 
 class RestaurantRemoteDataSourceImpl implements RestaurantRemoteDataSource {
@@ -53,6 +58,24 @@ class RestaurantRemoteDataSourceImpl implements RestaurantRemoteDataSource {
   @override
   Future<RestaurantModel> resubmit(String id) async {
     final response = await _dio.post('/api/restaurants/$id/resubmit');
+    return RestaurantModel.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  @override
+  Future<PageResponse<RestaurantModel>> getAllRestaurants({int page = 0, int size = 10}) async {
+    final response = await _dio.get('/api/restaurants', queryParameters: {
+      'page': page,
+      'size': size,
+    });
+    return PageResponse.fromJson(
+      response.data as Map<String, dynamic>,
+      (json) => RestaurantModel.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  @override
+  Future<RestaurantModel> getRestaurantById(String id) async {
+    final response = await _dio.get('/api/restaurants/$id');
     return RestaurantModel.fromJson(response.data as Map<String, dynamic>);
   }
 }

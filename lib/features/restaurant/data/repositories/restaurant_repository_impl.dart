@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../../../../core/error/dio_error_mapper.dart';
+import '../../../../core/models/page_response.dart';
 import '../../../../core/utils/result.dart';
 import '../../domain/entities/restaurant.dart';
 import '../../domain/entities/restaurant_input.dart';
@@ -55,6 +56,35 @@ class RestaurantRepositoryImpl implements RestaurantRepository {
   Future<Result<Restaurant>> resubmit(String id) async {
     try {
       final model = await _remote.resubmit(id);
+      return Result.success(model.toEntity());
+    } on DioException catch (e) {
+      return Result.failure(mapDioException(e));
+    }
+  }
+
+  @override
+  Future<Result<PageResponse<Restaurant>>> getAllRestaurants({int page = 0, int size = 10}) async {
+    try {
+      final modelPage = await _remote.getAllRestaurants(page: page, size: size);
+      final entityList = modelPage.content.map((model) => model.toEntity()).toList();
+      final entityPage = PageResponse<Restaurant>(
+        content: entityList,
+        page: modelPage.page,
+        size: modelPage.size,
+        totalElements: modelPage.totalElements,
+        totalPages: modelPage.totalPages,
+        last: modelPage.last,
+      );
+      return Result.success(entityPage);
+    } on DioException catch (e) {
+      return Result.failure(mapDioException(e));
+    }
+  }
+
+  @override
+  Future<Result<Restaurant>> getRestaurantById(String id) async {
+    try {
+      final model = await _remote.getRestaurantById(id);
       return Result.success(model.toEntity());
     } on DioException catch (e) {
       return Result.failure(mapDioException(e));

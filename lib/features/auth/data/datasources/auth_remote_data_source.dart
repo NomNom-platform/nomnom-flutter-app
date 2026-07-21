@@ -27,12 +27,22 @@ abstract class AuthRemoteDataSource {
   });
 
   Future<HealthResponseModel> getMyHealth();
+
+  Future<LoginResponseModel> googleLogin({required String idToken});
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final Dio _dio;
 
   const AuthRemoteDataSourceImpl(this._dio);
+
+  @override
+  Future<LoginResponseModel> googleLogin({required String idToken}) async {
+    final response = await _dio.post('/api/auth/google', data: {
+      'idToken': idToken,
+    });
+    return LoginResponseModel.fromJson(response.data as Map<String, dynamic>);
+  }
 
   @override
   Future<LoginResponseModel> login({required String email, required String password}) async {

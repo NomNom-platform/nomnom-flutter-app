@@ -20,6 +20,7 @@ OrderItemModel _$OrderItemModelFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$OrderItemModel {
+  @JsonKey(fromJson: _parseId)
   String? get id => throw _privateConstructorUsedError; // Only from response
   String get menuItemId => throw _privateConstructorUsedError;
   String get name => throw _privateConstructorUsedError;
@@ -44,7 +45,7 @@ abstract class $OrderItemModelCopyWith<$Res> {
       _$OrderItemModelCopyWithImpl<$Res, OrderItemModel>;
   @useResult
   $Res call(
-      {String? id,
+      {@JsonKey(fromJson: _parseId) String? id,
       String menuItemId,
       String name,
       int quantity,
@@ -112,7 +113,7 @@ abstract class _$$OrderItemModelImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {String? id,
+      {@JsonKey(fromJson: _parseId) String? id,
       String menuItemId,
       String name,
       int quantity,
@@ -173,7 +174,7 @@ class __$$OrderItemModelImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$OrderItemModelImpl implements _OrderItemModel {
   const _$OrderItemModelImpl(
-      {this.id,
+      {@JsonKey(fromJson: _parseId) this.id,
       required this.menuItemId,
       required this.name,
       required this.quantity,
@@ -184,6 +185,7 @@ class _$OrderItemModelImpl implements _OrderItemModel {
       _$$OrderItemModelImplFromJson(json);
 
   @override
+  @JsonKey(fromJson: _parseId)
   final String? id;
 // Only from response
   @override
@@ -243,7 +245,7 @@ class _$OrderItemModelImpl implements _OrderItemModel {
 
 abstract class _OrderItemModel implements OrderItemModel {
   const factory _OrderItemModel(
-      {final String? id,
+      {@JsonKey(fromJson: _parseId) final String? id,
       required final String menuItemId,
       required final String name,
       required final int quantity,
@@ -254,6 +256,7 @@ abstract class _OrderItemModel implements OrderItemModel {
       _$OrderItemModelImpl.fromJson;
 
   @override
+  @JsonKey(fromJson: _parseId)
   String? get id; // Only from response
   @override
   String get menuItemId;

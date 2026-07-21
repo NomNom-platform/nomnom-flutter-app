@@ -22,8 +22,9 @@ OrderRequestModel _$OrderRequestModelFromJson(Map<String, dynamic> json) {
 mixin _$OrderRequestModel {
   String get restaurantId => throw _privateConstructorUsedError;
   String get deliveryAddress => throw _privateConstructorUsedError;
+  String get paymentMethod => throw _privateConstructorUsedError;
   String? get note => throw _privateConstructorUsedError;
-  List<OrderItemModel> get items => throw _privateConstructorUsedError;
+  List<OrderItemRequestModel> get items => throw _privateConstructorUsedError;
 
   /// Serializes this OrderRequestModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -44,8 +45,9 @@ abstract class $OrderRequestModelCopyWith<$Res> {
   $Res call(
       {String restaurantId,
       String deliveryAddress,
+      String paymentMethod,
       String? note,
-      List<OrderItemModel> items});
+      List<OrderItemRequestModel> items});
 }
 
 /// @nodoc
@@ -65,6 +67,7 @@ class _$OrderRequestModelCopyWithImpl<$Res, $Val extends OrderRequestModel>
   $Res call({
     Object? restaurantId = null,
     Object? deliveryAddress = null,
+    Object? paymentMethod = null,
     Object? note = freezed,
     Object? items = null,
   }) {
@@ -77,6 +80,10 @@ class _$OrderRequestModelCopyWithImpl<$Res, $Val extends OrderRequestModel>
           ? _value.deliveryAddress
           : deliveryAddress // ignore: cast_nullable_to_non_nullable
               as String,
+      paymentMethod: null == paymentMethod
+          ? _value.paymentMethod
+          : paymentMethod // ignore: cast_nullable_to_non_nullable
+              as String,
       note: freezed == note
           ? _value.note
           : note // ignore: cast_nullable_to_non_nullable
@@ -84,7 +91,7 @@ class _$OrderRequestModelCopyWithImpl<$Res, $Val extends OrderRequestModel>
       items: null == items
           ? _value.items
           : items // ignore: cast_nullable_to_non_nullable
-              as List<OrderItemModel>,
+              as List<OrderItemRequestModel>,
     ) as $Val);
   }
 }
@@ -100,8 +107,9 @@ abstract class _$$OrderRequestModelImplCopyWith<$Res>
   $Res call(
       {String restaurantId,
       String deliveryAddress,
+      String paymentMethod,
       String? note,
-      List<OrderItemModel> items});
+      List<OrderItemRequestModel> items});
 }
 
 /// @nodoc
@@ -119,6 +127,7 @@ class __$$OrderRequestModelImplCopyWithImpl<$Res>
   $Res call({
     Object? restaurantId = null,
     Object? deliveryAddress = null,
+    Object? paymentMethod = null,
     Object? note = freezed,
     Object? items = null,
   }) {
@@ -131,6 +140,10 @@ class __$$OrderRequestModelImplCopyWithImpl<$Res>
           ? _value.deliveryAddress
           : deliveryAddress // ignore: cast_nullable_to_non_nullable
               as String,
+      paymentMethod: null == paymentMethod
+          ? _value.paymentMethod
+          : paymentMethod // ignore: cast_nullable_to_non_nullable
+              as String,
       note: freezed == note
           ? _value.note
           : note // ignore: cast_nullable_to_non_nullable
@@ -138,7 +151,7 @@ class __$$OrderRequestModelImplCopyWithImpl<$Res>
       items: null == items
           ? _value._items
           : items // ignore: cast_nullable_to_non_nullable
-              as List<OrderItemModel>,
+              as List<OrderItemRequestModel>,
     ));
   }
 }
@@ -149,8 +162,9 @@ class _$OrderRequestModelImpl implements _OrderRequestModel {
   const _$OrderRequestModelImpl(
       {required this.restaurantId,
       required this.deliveryAddress,
+      required this.paymentMethod,
       this.note,
-      final List<OrderItemModel> items = const []})
+      final List<OrderItemRequestModel> items = const []})
       : _items = items;
 
   factory _$OrderRequestModelImpl.fromJson(Map<String, dynamic> json) =>
@@ -161,11 +175,13 @@ class _$OrderRequestModelImpl implements _OrderRequestModel {
   @override
   final String deliveryAddress;
   @override
+  final String paymentMethod;
+  @override
   final String? note;
-  final List<OrderItemModel> _items;
+  final List<OrderItemRequestModel> _items;
   @override
   @JsonKey()
-  List<OrderItemModel> get items {
+  List<OrderItemRequestModel> get items {
     if (_items is EqualUnmodifiableListView) return _items;
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableListView(_items);
@@ -173,7 +189,7 @@ class _$OrderRequestModelImpl implements _OrderRequestModel {
 
   @override
   String toString() {
-    return 'OrderRequestModel(restaurantId: $restaurantId, deliveryAddress: $deliveryAddress, note: $note, items: $items)';
+    return 'OrderRequestModel(restaurantId: $restaurantId, deliveryAddress: $deliveryAddress, paymentMethod: $paymentMethod, note: $note, items: $items)';
   }
 
   @override
@@ -185,6 +201,8 @@ class _$OrderRequestModelImpl implements _OrderRequestModel {
                 other.restaurantId == restaurantId) &&
             (identical(other.deliveryAddress, deliveryAddress) ||
                 other.deliveryAddress == deliveryAddress) &&
+            (identical(other.paymentMethod, paymentMethod) ||
+                other.paymentMethod == paymentMethod) &&
             (identical(other.note, note) || other.note == note) &&
             const DeepCollectionEquality().equals(other._items, _items));
   }
@@ -192,7 +210,7 @@ class _$OrderRequestModelImpl implements _OrderRequestModel {
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(runtimeType, restaurantId, deliveryAddress,
-      note, const DeepCollectionEquality().hash(_items));
+      paymentMethod, note, const DeepCollectionEquality().hash(_items));
 
   /// Create a copy of OrderRequestModel
   /// with the given fields replaced by the non-null parameter values.
@@ -215,8 +233,9 @@ abstract class _OrderRequestModel implements OrderRequestModel {
   const factory _OrderRequestModel(
       {required final String restaurantId,
       required final String deliveryAddress,
+      required final String paymentMethod,
       final String? note,
-      final List<OrderItemModel> items}) = _$OrderRequestModelImpl;
+      final List<OrderItemRequestModel> items}) = _$OrderRequestModelImpl;
 
   factory _OrderRequestModel.fromJson(Map<String, dynamic> json) =
       _$OrderRequestModelImpl.fromJson;
@@ -226,9 +245,11 @@ abstract class _OrderRequestModel implements OrderRequestModel {
   @override
   String get deliveryAddress;
   @override
+  String get paymentMethod;
+  @override
   String? get note;
   @override
-  List<OrderItemModel> get items;
+  List<OrderItemRequestModel> get items;
 
   /// Create a copy of OrderRequestModel
   /// with the given fields replaced by the non-null parameter values.

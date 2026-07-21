@@ -78,9 +78,12 @@ final router = GoRouter(
       ],
     ),
     GoRoute(
-      path: '/track-order',
+      path: '/track-order/:id',
       parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => const TrackOrderScreen(),
+      builder: (context, state) {
+        final id = state.pathParameters['id']!;
+        return TrackOrderScreen(orderId: id);
+      },
     ),
     GoRoute(
       path: '/order-history',

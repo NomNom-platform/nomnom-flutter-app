@@ -1,3 +1,4 @@
+import '../../../../core/models/page_response.dart';
 import '../../../../core/utils/result.dart';
 import '../entities/restaurant.dart';
 import '../entities/restaurant_input.dart';
@@ -13,4 +14,8 @@ abstract class RestaurantRepository {
   Future<Result<void>> delete(String id);
 
   Future<Result<Restaurant>> resubmit(String id);
+
+  Future<Result<PageResponse<Restaurant>>> getAllRestaurants({int page = 0, int size = 10});
+
+  Future<Result<Restaurant>> getRestaurantById(String id);
 }
